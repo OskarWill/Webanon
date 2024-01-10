@@ -1,0 +1,97 @@
+import time
+import requests
+from selenium import webdriver
+from bs4 import BeautifulSoup
+from urllib.request import Request, urlopen
+import random
+import webbrowser
+from queue import Queue 
+import threading 
+
+#Random User Agent IDs for web scraping
+
+
+class webanon:
+	'''randomizes the user agent and ip address when connecting to websites'''
+
+	def __init__(self):
+		windowsystems = ["Windows NT 10.0", "Windows NT 6.3", "Windows NT 6.1", "compatible"]
+		mozillas = ['Mozilla/5.0', 'Mozilla/4.0']
+		bits = ["Win64","WOW64","MSIE 10.0","MSIE 8.0"]
+		chromeversions = ["Chrome/60.0.3112.113", "Chrome/55.0.2883.87", "Chrome/57.0.2987.133", "Chrome/60.0.3112.90"]
+		webkits = ["AppleWebkit/537.36", "Trident/6.0", "Trident/4.0", "Trident/7.0", "Trident/5.0"]
+		
+		self.proxies = []
+		
+
+		self.windowsystem = random.choice(windowsystems)
+		self.mozilla = random.choice(mozillas)
+		self.bit = random.choice(bits)
+		self.chromeversion = random.choice(chromeversions)
+		self.webkit = random.choice(webkits)
+
+ 		
+	def agent(self):
+		'''randomizes user agent'''
+		self.user_agents = []
+
+		self.chromeagent = "'" + '{}'.format(self.mozilla) + " (" + '{}'.format(self.windowsystem) + "; "  + '{}'.format(self.bit) + "; " + " x64" + ") " + '{}'.format(self.webkit) +  " (KHTML, like Gecko) "  + '{}'.format(self.chromeversion) + " Safari/537.3'"
+		self.mozillaagent = "'" + '{}'.format(self.mozilla) + " (" + '{}'.format(self.windowsystem)  + "; "  + '{}'.format(self.bit) + "; "  + '{}'.format(self.webkit) +  ") like Gecko'"
+
+		self.user_agents.append(self.chromeagent)
+		self.user_agents.append(self.mozillaagent)
+		self.agents = random.choice(self.user_agents)
+
+		return self.agents
+
+	 
+	def proxyip(self):
+		'''rotates our ip for web crawling/automation'''
+	
+		
+		self.proxies_req = Request('https://free-proxy-list.net/')	#parses free proxy list from website
+
+		try:
+			self.proxies_req.add_header('User-Agent',self.mozillaagent)
+		except Exception:
+			self.proxies_req.add_header('user-Agent',self.chromeagent)
+
+		self.proxies_doc = urlopen(self.proxies_req).read().decode('utf8')
+
+		sslproxies = BeautifulSoup(self.proxies_doc, 'html.parser')
+		proxies_table = sslproxies.find(id='proxylisttable')
+
+		#array of proxies
+		for row in proxies_table.tbody.find_all('tr'):
+				self.proxies.append({
+				'ip': row.find_all('td')[0].string,
+				'port':row.find_all('td')[1].string
+				})
+
+		random_proxy = random.randint(0, len(self.proxies) - 1)
+
+		#choose random proxy
+		proxy_index = random_proxy
+		self.proxy = self.proxies[proxy_index]
+ 
+		for n in range(1,100):
+			req = Request('http://icanhazip.com/')	#requests our ip from website
+			req.set_proxy(self.proxy['ip'] + ':' + self.proxy['port'], 'http')
+
+			if n % 10 == 0:		#changes ip every 10 requests
+				proxy_index = random_proxy
+				self.proxy = self.proxies[proxy_index]
+
+		try:
+			self.my_ip = ulropen(req).read().decode('utf8')
+			print('#' + str(n) + ': ' + self.my_ip)
+		except:
+			del self.proxies[proxy_index]
+			print('Proxy ' + self.proxy['ip'] + ':' + self.proxy['port'] + ' deleted.')
+			proxy_index = random_proxy
+			self.proxy = self.proxies[proxy_index]
+			return self.proxy
+
+ 
+
+ 
